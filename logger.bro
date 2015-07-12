@@ -15,7 +15,7 @@ type Info: record {
 	#missed_bytes: count &log &default=0;
 	conter: count  &log &optional; 
 	ts: time &log;
-	#proto:        transport_proto &log;
+	proto:        transport_proto &log;
 	orig_h: addr &log; 
 	orig_p: port &log;
 	resp_h: addr &log;
@@ -98,6 +98,7 @@ function set_conn(c: connection, eoc: bool)
 event packet_contents(c:connection, contents:string ){
 		
 		local service = determine_service(c);
+		local proto=get_port_transport_proto(c$id$resp_p);
 
 		sum+=1;
 		Log::write(Martin::LOG, [$ts=network_time(),
@@ -105,6 +106,8 @@ event packet_contents(c:connection, contents:string ){
 			$orig_h= c$id$orig_h,
 			$orig_p= c$id$orig_p,
 			$resp_p= c$id$resp_p,
+			$proto = proto,
+			$resp_h= c$id$resp_h,
 			$service=service,
 			$payload=contents
 		 ]);
