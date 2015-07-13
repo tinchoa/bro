@@ -1,3 +1,6 @@
+##This Script log every single packet that appear on the network interface
+## the logger fields are counter
+
 module Martin;
 
 global sum =0;
@@ -9,51 +12,41 @@ redef enum Log::ID += { LOG };
 
 # Define the record type that will contain the data to log.
 type Info: record {
-	# ts: time &log;
-	#id: conn_id &log;
-	# service: string &log &optional;
-	#missed_bytes: count &log &default=0;
-	conter: count  &log &optional; 
-	ts: time &log;
-	proto:        transport_proto &log;
-	orig_h: addr &log; 
-	orig_p: port &log;
-	resp_h: addr &log;
-	resp_p: port &log;
-	# status: string &log &optional;
-	#country: string &default="unknown";
-	# ttl: count &log;
-	service: string &log &optional;
-	payload: string &log &optional;
+	conter: count  &log &optional;  #counter of packet seeing since the script start 
+	ts: time &log; #timestamp
+	proto:        transport_proto &log; # transport protocol identification
+	orig_h: addr &log; #IP address source
+	orig_p: port &log; #IP port source
+	resp_h: addr &log; #IP address destination
+	resp_p: port &log; #IP port source 
+	service: string &log &optional; #type of ethernet service
+	payload: string &log &optional; #payload of packet
 };
 
 }
 
-
 # This event is handled at a priority higher than zero so that if
 # users modify this stream in another script, they can do so at the
 # default priority of zero.
-event bro_init() &priority=5
-{
-# Create the stream. This adds a default filter automatically.
-Log::create_stream(Martin::LOG, [$columns=Info
-, $path="pep"
-]);
-sum=0;
-print "Starting";
-}
+event bro_init() &priority=5 {
+	# Create the stream. This adds a default filter automatically.
+	Log::create_stream(Martin::LOG, [$columns=Info
+	, $path="pep" #name of the file
+	]);
+	sum=0;
+	print "Starting";
+ }
 
-function determine_service(c: connection): string
-{
-local service = "";
-for ( s in c$service )
-{
-if ( sub_bytes(s, 0, 1) != "-" )
-service = service == "" ? s : cat(service, ",", s);
-}
+function determine_service(c: connection): string {
+	local service = "";
+	for ( s in c$service )
+	{
+	if ( sub_bytes(s, 0, 1) != "-" )
+	service = service == "" ? s : cat(service, ",", s);
+	}
 
-return to_lower(service);
-}
+	return to_lower(service);
+ }
  
 
 
@@ -91,7 +84,6 @@ function set_conn(c: connection, eoc: bool)
 		local service = determine_service(c);
 		if ( service != "" )
 			c$conn$service=service;
-#		c$conn$conn_state=conn_state(c, get_port_transport_proto(c$id$resp_p));
 		}
 	}
 
